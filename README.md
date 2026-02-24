@@ -1,73 +1,83 @@
-# React + TypeScript + Vite
+# 🏥 Krankenhaus Dienstplan System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 📌 Projektbeschreibung
 
-Currently, two official plugins are available:
+Dieses Projekt ist ein Dienstplan-System für die Krankenhausambulanz der Stadt Dornbirn.  
+Es ermöglicht die Verwaltung von Ärzten sowie die Planung von Schichten für die Innere und Unfallambulanz.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Das System wurde mit **React** und **Supabase** entwickelt und folgt einem **Scrum-ähnlichen Entwicklungsprozess**.
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 👥 Team
 
-## Expanding the ESLint configuration
+- Alperen Meseli
+- Nihat Özgöc
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default defineConfig([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
+## 🚀 Technologien
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- React
+- Supabase
+- Git & GitHub
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
-```
+---
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🏗 Systemfunktionen
 
-```js
-// eslint.config.js
-import reactX from "eslint-plugin-react-x";
-import reactDom from "eslint-plugin-react-dom";
+- Login System für Administratoren
+- Verwaltung von Ärzten
+- Erstellung und Anzeige von Schichten
+- Automatische Dienstplanzuweisung
+- Konfliktprüfung von Arbeitszeiten
 
-export default defineConfig([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs["recommended-typescript"],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+---
+
+## 🧠 Scrum Arbeitsweise
+
+### Sprint Planung
+
+Das Projekt wird in mehreren Sprints entwickelt:
+
+Sprint 1:
+
+- Projekt Setup
+- Login System
+
+Sprint 2:
+
+- Arztverwaltung
+
+Sprint 3:
+
+- Schichtplanung
+
+Sprint 4:
+
+- Automatische Dienstplanlogik
+
+Sprint 5:
+
+- Testing und Dokumentation
+
+---
+
+👉 Dokumentation und Scrum Board befinden sich in Notion:
+[Hier zum Notion Projekt](https://succulent-croissant-4f5.notion.site/Projektplan-3111ac9c88b28085b7b4d5488f4ebf55)
+
+---
+
+## 🎬 Sneak Peak
+
+![Login Page](img/Login-Page.png)
+
+---
+
+## 🔧 Installation
+
+Repository klonen:
+
+```bash
+git clone <repo-link>
 ```
