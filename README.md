@@ -69,6 +69,13 @@ Sprint 5:
 
 ---
 
+## 👤 Login Informations
+
+📧 E-Mail: test@kh-dornbirn.at
+🔒 Passwort: test123
+
+---
+
 ## 🎬 Sneak Peak
 
 ![Login Page](img/Login-Page.png)
