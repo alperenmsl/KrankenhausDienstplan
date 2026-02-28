@@ -47,7 +47,8 @@ Sprint 1:
 
 Sprint 2:
 
-- Arztverwaltung
+- SupaBase integrieren
+- Auth System, Redirect
 
 Sprint 3:
 
