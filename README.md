@@ -78,7 +78,7 @@ Sprint 5:
 
 ## 🎬 Sneak Peak
 
-![Login Page](img/Login-Page.png)
+![Login Page](img/Login.png)
 ![Dashboard Page](img/Dashboard.png)
 
 ---
