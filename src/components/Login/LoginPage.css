@@ -1,0 +1,224 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Container */
+.login-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI', Arial, sans-serif;
+
+    animation: fadeInPage 0.8s ease-out forwards;
+
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Dark Premium Overlay */
+.login-container::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(rgba(15, 23, 42, 0.55),
+            rgba(15, 23, 42, 0.65));
+    z-index: 0;
+}
+
+/* Glass Card */
+.blur-box {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 18px;
+
+    padding: 48px 48px 40px;
+    width: 100%;
+    max-width: 440px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    box-shadow:
+        0 10px 40px rgba(0, 0, 0, 0.12),
+        0 2px 8px rgba(0, 0, 0, 0.08);
+
+    animation: fadeInCard 0.9s ease-out 0.2s forwards;
+    opacity: 0;
+
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* Subtiles Glas-Noise */
+.blur-box::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background-image:
+        radial-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+    background-size: 3px 3px;
+    opacity: 0.25;
+}
+
+/* Optional: minimaler Lift */
+.blur-box:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        0 18px 50px rgba(0, 0, 0, 0.16),
+        0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Logo */
+.logo-title {
+    font-size: 2.1rem;
+    font-weight: 900;
+    letter-spacing: 0.14em;
+    color: #111827;
+    text-transform: uppercase;
+    line-height: 1;
+}
+
+.logo-title .logo-accent {
+    color: #2563eb;
+}
+
+.logo-subtitle {
+    font-size: 0.75rem;
+    letter-spacing: 0.35em;
+    color: #4b5563;
+    text-transform: uppercase;
+    margin-top: 6px;
+    margin-bottom: 26px;
+    text-align: center;
+}
+
+.blur-box h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+/* Form */
+.login-form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.input-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6b7280;
+    font-size: 0.9rem;
+    pointer-events: none;
+}
+
+.login-form input {
+    width: 100%;
+    padding: 14px 16px 14px 42px;
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    color: #111827;
+    outline: none;
+    transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-form input::placeholder {
+    color: #9ca3af;
+}
+
+.login-form input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Button */
+.login-form button[type="submit"] {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: transform 0.1s ease, box-shadow 0.2s ease;
+}
+
+.login-form button[type="submit"]:hover {
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
+}
+
+.login-form button[type="submit"]:active {
+    transform: scale(0.98);
+}
+
+/* Forgot Password */
+.forgot-password {
+    text-align: center;
+    color: #4b5563;
+    font-size: 0.85rem;
+    text-decoration: none;
+    margin-top: 6px;
+    transition: color 0.2s ease;
+}
+
+.forgot-password:hover {
+    color: #2563eb;
+}
+
+/* Animations */
+@keyframes fadeInPage {
+    from {
+        opacity: 0;
+        transform: scale(1.01);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes fadeInCard {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
