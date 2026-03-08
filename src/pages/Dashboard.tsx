@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import DienstplanView from "../components/Dienstplan/DienstplanView";
+import type {
+  DayGroup,
+  ScheduleEntry,
+} from "../components/Dienstplan/DienstplanView";
 import "./Dashboard.css";
 
 type Section = "overview" | "dienstplan" | "mitteilungen" | "profil";
@@ -60,50 +65,23 @@ const shiftLabelColors: Record<string, string> = {
   Nachtschicht: "#8b5cf6",
 };
 
-interface ScheduleEntry {
-  id: number;
-  date: string;
-  start_time: string;
-  end_time: string;
-  overnight: boolean;
-  notes?: string | null;
-  stations: { name: string; short_code?: string; color: string }[] | null;
-  shift_types?: { name: string; color: string }[] | null;
-}
-
-interface DayGroup {
-  label: string;
-  date: string;
-  entries: ScheduleEntry[];
-}
-
 const formatTime = (t: string) => t.slice(0, 5);
 
-const getDayLabel = (dateStr: string) => {
+const getDayLabel = (dateStr: string): string => {
   const d = new Date(dateStr);
   const days = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
-  const day = days[d.getDay()];
-  const dd = String(d.getDate()).padStart(2, "0");
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  return `${day} ${dd}.${mm}`;
+  return `${days[d.getDay()]} ${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}`;
 };
 
-const getCurrentWeekDates = () => {
+const getCurrentWeekDates = (): string[] => {
   const today = new Date();
-  const dow = today.getDay(); // 0=So, 1=Mo, ..., 6=Sa
-
-  const monday = new Date(today);
-  if (dow === 0) {
-    // Sonntag → zeige kommende Woche (Mo+1)
-    monday.setDate(today.getDate() + 1);
-  } else {
-    // Mo–Sa → zeige aktuelle Woche
-    monday.setDate(today.getDate() - (dow - 1));
-  }
-
+  const dow = today.getDay();
+  const mon = new Date(today);
+  if (dow === 0) mon.setDate(today.getDate() + 1);
+  else mon.setDate(today.getDate() - (dow - 1));
   return Array.from({ length: 5 }, (_, i) => {
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + i);
+    const d = new Date(mon);
+    d.setDate(mon.getDate() + i);
     return d.toISOString().split("T")[0];
   });
 };
@@ -137,43 +115,60 @@ const Dashboard: React.FC = () => {
           .single();
         if (profile) {
           setUserProfile(profile);
-          if (profile.full_name) {
+          if (profile.full_name)
             setUserName(profile.full_name.split(" ").slice(-1)[0]);
-          }
         }
       }
     };
     getUser();
   }, []);
 
+  // Mini overview fetch (current week only)
   useEffect(() => {
     if (!userId) return;
-    const loadSchedule = async () => {
+    const load = async () => {
       setLoadingSchedule(true);
       const weekDates = getCurrentWeekDates();
-      const { data, error } = await supabase
+
+      const { data: entries, error } = await supabase
         .from("schedule_entries")
-        .select(
-          `id, date, start_time, end_time, overnight, station_id, stations!schedule_entries_station_id_fkey ( name, color )`,
-        )
+        .select("id, date, start_time, end_time, overnight, notes, station_id")
         .eq("user_id", userId)
         .gte("date", weekDates[0])
         .lte("date", weekDates[4])
         .order("date", { ascending: true })
         .order("start_time", { ascending: true });
 
+      const { data: stations } = await supabase
+        .from("stations")
+        .select("id, name, color");
+
       if (error) {
-        console.error(error);
         setLoadingSchedule(false);
         return;
       }
+
+      const stationMap: Record<number, { name: string; color: string }> = {};
+      (stations || []).forEach(
+        (s: { id: number; name: string; color: string }) => {
+          stationMap[s.id] = s;
+        },
+      );
+
+      const enriched: ScheduleEntry[] = (entries || []).map((e: any) => ({
+        ...e,
+        stations:
+          e.station_id && stationMap[e.station_id]
+            ? [stationMap[e.station_id]]
+            : null,
+      }));
 
       const grouped: Record<string, ScheduleEntry[]> = {};
       weekDates.forEach((d) => {
         grouped[d] = [];
       });
-      (data || []).forEach((entry: ScheduleEntry) => {
-        if (grouped[entry.date]) grouped[entry.date].push(entry);
+      enriched.forEach((e) => {
+        if (grouped[e.date]) grouped[e.date].push(e);
       });
 
       setScheduleData(
@@ -185,7 +180,7 @@ const Dashboard: React.FC = () => {
       );
       setLoadingSchedule(false);
     };
-    loadSchedule();
+    load();
   }, [userId]);
 
   const handleLogout = async () => {
@@ -208,6 +203,7 @@ const Dashboard: React.FC = () => {
 
   const today = new Date().toISOString().split("T")[0];
 
+  // ── MINI SCHEDULE CARD ──
   const renderScheduleCard = () => (
     <div className="card card-schedule">
       <div className="card-header">
@@ -235,33 +231,32 @@ const Dashboard: React.FC = () => {
                   <div className="shift-empty">Frei</div>
                 ) : (
                   d.entries.map((entry) => {
-                    const stationName =
-                      entry.stations?.[0]?.name || "Unbekannt";
-                    const color =
-                      entry.stations?.[0]?.color ||
-                      stationColors[stationName] ||
+                    const st = entry.stations?.[0]?.name ?? "";
+                    const sc =
+                      entry.stations?.[0]?.color ??
+                      stationColors[st] ??
                       "#64748b";
-                    const shiftLabel = getShiftLabel(
+                    const label = getShiftLabel(
                       entry.start_time,
                       entry.overnight,
                     );
-                    const shiftColor = shiftLabelColors[shiftLabel] || color;
+                    const color = shiftLabelColors[label] ?? sc;
                     return (
                       <div
                         key={entry.id}
                         className="shift-chip"
                         style={{
-                          background: shiftColor + "18",
-                          borderLeft: `3px solid ${shiftColor}`,
-                          color: shiftColor,
+                          background: color + "18",
+                          borderLeft: `3px solid ${color}`,
+                          color,
                         }}
                       >
-                        <span className="shift-name">{shiftLabel}</span>
+                        <span className="shift-name">{label}</span>
                         <span className="shift-time">
                           {formatTime(entry.start_time)} –{" "}
                           {formatTime(entry.end_time)}
                         </span>
-                        <span className="shift-station">{stationName}</span>
+                        <span className="shift-station">{st || "—"}</span>
                       </div>
                     );
                   })
@@ -280,6 +275,7 @@ const Dashboard: React.FC = () => {
     </div>
   );
 
+  // ── OVERVIEW ──
   const renderOverview = () => (
     <div className="overview-grid fade-in">
       <div className="welcome-banner">
@@ -329,17 +325,13 @@ const Dashboard: React.FC = () => {
     </div>
   );
 
+  // ── CONTENT ROUTER ──
   const renderContent = () => {
     switch (activeSection) {
       case "overview":
         return renderOverview();
       case "dienstplan":
-        return (
-          <div className="fade-in placeholder-section">
-            <h2>Vollständiger Dienstplan</h2>
-            <p>Kommt bald.</p>
-          </div>
-        );
+        return userId ? <DienstplanView userId={userId} /> : null;
       case "mitteilungen":
         return (
           <div className="fade-in placeholder-section">
@@ -354,7 +346,7 @@ const Dashboard: React.FC = () => {
             <p>
               <strong>{displayName}</strong>
             </p>
-            <p>{userEmail}</p>
+            <p style={{ marginTop: 6 }}>{userEmail}</p>
           </div>
         );
       default:
@@ -388,6 +380,7 @@ const Dashboard: React.FC = () => {
           <span>↩</span> Abmelden
         </button>
       </aside>
+
       <div className="db-main">
         <header className="db-topbar">
           <div className="topbar-title">
