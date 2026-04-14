@@ -8,11 +8,17 @@ import type {
 } from "../components/Dienstplan/DienstplanView";
 import "./Dashboard.css";
 
-type Section = "overview" | "dienstplan" | "mitteilungen" | "profil";
+type Section = "overview" | "dienstplan" | "mitteilungen" | "profil" | "admin";
+
+const adminUids = [
+  "b09cb847-18dc-4d6f-b5fb-8a3444e17d8e", // Alperen
+  "4c6ca66c-854a-44c0-a959-cd10d8ace65b", // Nihat
+];
 
 const navItems: { key: Section; label: string; icon: string }[] = [
   { key: "overview", label: "ÜBERSICHT", icon: "⊞" },
   { key: "dienstplan", label: "DIENSTPLAN", icon: "📅" },
+  { key: "admin", label: "ADMIN", icon: "⚙" },
   { key: "mitteilungen", label: "MITTEILUNGEN", icon: "✉" },
   { key: "profil", label: "PROFIL", icon: "👤" },
 ];
@@ -441,13 +447,46 @@ const Dashboard: React.FC = () => {
     </div>
   );
 
+  const isAdmin = userId && adminUids.includes(userId);
+
+  const filteredNavItems = navItems.filter((item) => {
+    if (isAdmin) {
+      // Admins sehen keinen Dienstplan, sondern Admin Panel
+      return item.key !== "dienstplan";
+    } else {
+      // Normale User sehen kein Admin Panel
+      return item.key !== "admin";
+    }
+  });
+
   // ── CONTENT ROUTER ──
   const renderContent = () => {
     switch (activeSection) {
       case "overview":
         return renderOverview();
       case "dienstplan":
-        return userId ? <DienstplanView userId={userId} /> : null;
+        return isAdmin ? null : userId ? (
+          <DienstplanView userId={userId} />
+        ) : null;
+      case "admin":
+        return isAdmin ? (
+          <div className="fade-in placeholder-section">
+            <h2>Admin Panel</h2>
+            <p>Willkommen im Administrationsbereich.</p>
+            <div
+              style={{
+                marginTop: "20px",
+                padding: "40px",
+                border: "2px dashed #e2e8f0",
+                borderRadius: "12px",
+                textAlign: "center",
+                color: "#64748b",
+              }}
+            >
+              Hier werden bald Admin-Funktionen verfügbar sein.
+            </div>
+          </div>
+        ) : null;
       case "mitteilungen":
         return userId ? <MitteilungenView userId={userId} /> : null;
       case "profil":
@@ -475,7 +514,7 @@ const Dashboard: React.FC = () => {
           <span className="db-logo-sub">KRANKENHAUS</span>
         </div>
         <nav className="db-nav">
-          {navItems.map((item) => (
+          {filteredNavItems.map((item) => (
             <button
               key={item.key}
               className={`db-nav-item ${activeSection === item.key ? "active" : ""}`}
