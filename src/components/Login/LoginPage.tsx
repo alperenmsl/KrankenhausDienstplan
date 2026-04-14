@@ -65,6 +65,12 @@ const LoginPage: React.FC = () => {
           {errorMsg && <p style={{ color: "red" }}>{errorMsg}</p>}
 
           <button type="submit">Einloggen</button>
+
+          <button className="forgot-password" onClick={() => navigate("/forgot-password")}>
+            Passwort vergessen?
+          </button>
+
+          
         </form>
       </div>
     </div>

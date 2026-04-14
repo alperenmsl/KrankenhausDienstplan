@@ -39,11 +39,11 @@
     z-index: 1;
     overflow: hidden;
 
-    background: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.569);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
 
-    border: 1px solid rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.412);
     border-radius: 18px;
 
     padding: 48px 48px 40px;
@@ -112,7 +112,7 @@
 .blur-box h2 {
     font-size: 1rem;
     font-weight: 600;
-    color: #1f2937;
+    color: #0f1013;
     margin-bottom: 24px;
     text-align: center;
 }
@@ -187,7 +187,8 @@
 /* Forgot Password */
 .forgot-password {
     text-align: center;
-    color: #4b5563;
+    background-color: #9ca3af;
+    color: #ffffff;
     font-size: 0.85rem;
     text-decoration: none;
     margin-top: 6px;
