@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import DienstplanView from "../components/Dienstplan/DienstplanView";
+import MitteilungenView from "../components/Mitteilungen/MitteilungenView";
 import type {
   DayGroup,
   ScheduleEntry,
@@ -14,33 +15,6 @@ const navItems: { key: Section; label: string; icon: string }[] = [
   { key: "dienstplan", label: "DIENSTPLAN", icon: "📅" },
   { key: "mitteilungen", label: "MITTEILUNGEN", icon: "✉" },
   { key: "profil", label: "PROFIL", icon: "👤" },
-];
-
-const mockMessages = [
-  {
-    name: "Frederick Murphy",
-    action: "hat deinen Beitrag geliked",
-    time: "vor 7 Min",
-    avatar: "FM",
-  },
-  {
-    name: "Elisha Scott",
-    action: "ist jetzt verfügbar",
-    time: "vor 10 Std",
-    avatar: "ES",
-  },
-  {
-    name: "John Doe",
-    action: "hat eine Nachricht gesendet",
-    time: "vor 8 Std",
-    avatar: "JD",
-  },
-  {
-    name: "Monica Smith",
-    action: "ist jetzt verfügbar",
-    time: "vor 5 Std",
-    avatar: "MS",
-  },
 ];
 
 const stationColors: Record<string, string> = {
@@ -86,6 +60,38 @@ const getCurrentWeekDates = (): string[] => {
   });
 };
 
+const playNotificationSound = () => {
+  try {
+    const ctx = new (
+      window.AudioContext || (window as any).webkitAudioContext
+    )();
+
+    const playTone = (freq: number, startTime: number, duration: number) => {
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      oscillator.frequency.setValueAtTime(freq, startTime);
+      oscillator.type = "sine";
+
+      gainNode.gain.setValueAtTime(0, startTime);
+      gainNode.gain.linearRampToValueAtTime(0.3, startTime + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+      oscillator.start(startTime);
+      oscillator.stop(startTime + duration);
+    };
+
+    const now = ctx.currentTime;
+    playTone(880, now, 0.15);
+    playTone(1108.7, now + 0.15, 0.25);
+  } catch (e) {
+    console.warn("Sound konnte nicht abgespielt werden:", e);
+  }
+};
+
 const Dashboard: React.FC = () => {
   const [activeSection, setActiveSection] = useState<Section>("overview");
   const [userEmail, setUserEmail] = useState("");
@@ -97,6 +103,9 @@ const Dashboard: React.FC = () => {
     full_name?: string;
     title?: string;
   } | null>(null);
+  const [dashboardMessages, setDashboardMessages] = useState<any[]>([]);
+  const [loadingMessages, setLoadingMessages] = useState(true);
+  const [hasNewMessage, setHasNewMessage] = useState(false);
 
   useEffect(() => {
     const getUser = async () => {
@@ -181,6 +190,90 @@ const Dashboard: React.FC = () => {
       setLoadingSchedule(false);
     };
     load();
+  }, [userId]);
+
+  // Dashboard messages fetch + Realtime
+  useEffect(() => {
+    if (!userId) return;
+
+    const fetchDashboardMessages = async () => {
+      setLoadingMessages(true);
+
+      // Erst mit JOIN versuchen
+      const { data, error } = await supabase
+        .from("messages")
+        .select(
+          `
+      id,
+      content,
+      created_at,
+      sender_id,
+      sender:profiles!sender_id(full_name)
+    `,
+        )
+        .eq("receiver_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(4);
+
+      if (!error && data) {
+        setDashboardMessages(data);
+      } else {
+        // Fallback: ohne JOIN, dann Namen separat laden
+        console.error("Join-Fehler:", error);
+        const { data: msgs } = await supabase
+          .from("messages")
+          .select("id, content, created_at, sender_id")
+          .eq("receiver_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(4);
+
+        if (msgs) {
+          // Sender-Namen einzeln laden
+          const senderIds = [...new Set(msgs.map((m) => m.sender_id))];
+          const { data: profilesData } = await supabase
+            .from("profiles")
+            .select("id, full_name")
+            .in("id", senderIds);
+
+          const profileMap: Record<string, string> = {};
+          (profilesData || []).forEach((p) => {
+            profileMap[p.id] = p.full_name;
+          });
+
+          setDashboardMessages(
+            msgs.map((m) => ({
+              ...m,
+              sender: { full_name: profileMap[m.sender_id] || "Unbekannt" },
+            })),
+          );
+        }
+      }
+      setLoadingMessages(false);
+    };
+
+    fetchDashboardMessages();
+
+    const channel = supabase
+      .channel(`dashboard_msgs_${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `receiver_id=eq.${userId}`,
+        },
+        (_payload) => {
+          playNotificationSound();
+          setHasNewMessage(true);
+          fetchDashboardMessages();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userId]);
 
   const handleLogout = async () => {
@@ -300,23 +393,46 @@ const Dashboard: React.FC = () => {
         <div className="card card-messages">
           <div className="card-header">
             <span className="card-title">Nachrichten</span>
-            <span className="badge-count">{mockMessages.length}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              {hasNewMessage && (
+                <span className="new-msg-dot" title="Neue Nachricht" />
+              )}
+              <span className="badge-count">{dashboardMessages.length}</span>
+            </div>
           </div>
           <div className="messages-list">
-            {mockMessages.map((msg, i) => (
-              <div key={i} className="message-item">
-                <div className="msg-avatar">{msg.avatar}</div>
-                <div className="msg-body">
-                  <div className="msg-name">{msg.name}</div>
-                  <div className="msg-action">{msg.action}</div>
+            {loadingMessages ? (
+              <div className="messages-loading">Lade Nachrichten...</div>
+            ) : dashboardMessages.length > 0 ? (
+              dashboardMessages.map((msg, i) => (
+                <div key={i} className="message-item">
+                  <div className="msg-avatar">
+                    {(msg.sender as any)?.full_name?.[0]?.toUpperCase() || "?"}
+                  </div>
+                  <div className="msg-body">
+                    <div className="msg-name">
+                      {(msg.sender as any)?.full_name || "Unbekannt"}
+                    </div>
+                    <div className="msg-action">{msg.content}</div>
+                  </div>
+                  <div className="msg-time">
+                    {new Date(msg.created_at).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </div>
                 </div>
-                <div className="msg-time">{msg.time}</div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <div className="no-messages">Keine neuen Nachrichten</div>
+            )}
           </div>
           <button
             className="card-link"
-            onClick={() => setActiveSection("mitteilungen")}
+            onClick={() => {
+              setHasNewMessage(false);
+              setActiveSection("mitteilungen");
+            }}
           >
             Alle anzeigen →
           </button>
@@ -333,12 +449,7 @@ const Dashboard: React.FC = () => {
       case "dienstplan":
         return userId ? <DienstplanView userId={userId} /> : null;
       case "mitteilungen":
-        return (
-          <div className="fade-in placeholder-section">
-            <h2>Mitteilungen</h2>
-            <p>Hier werden alle Mitteilungen angezeigt.</p>
-          </div>
-        );
+        return userId ? <MitteilungenView userId={userId} /> : null;
       case "profil":
         return (
           <div className="fade-in placeholder-section">
@@ -368,10 +479,16 @@ const Dashboard: React.FC = () => {
             <button
               key={item.key}
               className={`db-nav-item ${activeSection === item.key ? "active" : ""}`}
-              onClick={() => setActiveSection(item.key)}
+              onClick={() => {
+                if (item.key === "mitteilungen") setHasNewMessage(false);
+                setActiveSection(item.key);
+              }}
             >
               <span className="nav-icon">{item.icon}</span>
               <span className="nav-label">{item.label}</span>
+              {item.key === "mitteilungen" && hasNewMessage && (
+                <span className="nav-badge" />
+              )}
               {activeSection === item.key && <span className="nav-indicator" />}
             </button>
           ))}
