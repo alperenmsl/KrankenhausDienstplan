@@ -1,8 +1,9 @@
-
-type Props = {}
+type Props = {};
 
 export default function Test({}: Props) {
   return (
-    <div>Test</div>
-  )
+    <div>
+      <h1>super</h1>
+    </div>
+  );
 }
