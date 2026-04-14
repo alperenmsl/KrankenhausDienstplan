@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import DienstplanView from "../components/Dienstplan/DienstplanView";
 import MitteilungenView from "../components/Mitteilungen/MitteilungenView";
+import AdminPanel from "../components/Admin/AdminPanel";
 import type {
   DayGroup,
   ScheduleEntry,
@@ -469,24 +470,7 @@ const Dashboard: React.FC = () => {
           <DienstplanView userId={userId} />
         ) : null;
       case "admin":
-        return isAdmin ? (
-          <div className="fade-in placeholder-section">
-            <h2>Admin Panel</h2>
-            <p>Willkommen im Administrationsbereich.</p>
-            <div
-              style={{
-                marginTop: "20px",
-                padding: "40px",
-                border: "2px dashed #e2e8f0",
-                borderRadius: "12px",
-                textAlign: "center",
-                color: "#64748b",
-              }}
-            >
-              Hier werden bald Admin-Funktionen verfügbar sein.
-            </div>
-          </div>
-        ) : null;
+        return isAdmin ? <AdminPanel /> : null;
       case "mitteilungen":
         return userId ? <MitteilungenView userId={userId} /> : null;
       case "profil":
