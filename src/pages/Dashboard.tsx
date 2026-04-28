@@ -70,7 +70,12 @@ const getCurrentWeekDates = (): string[] => {
 const playNotificationSound = () => {
   try {
     const ctx = new (
-      window.AudioContext || (window as any).webkitAudioContext
+      window.AudioContext ||
+      (
+        window as unknown as Window & {
+          webkitAudioContext: typeof AudioContext;
+        }
+      ).webkitAudioContext
     )();
 
     const playTone = (freq: number, startTime: number, duration: number) => {
@@ -110,30 +115,52 @@ const Dashboard: React.FC = () => {
     full_name?: string;
     title?: string;
   } | null>(null);
-  const [dashboardMessages, setDashboardMessages] = useState<any[]>([]);
+  const [dashboardMessages, setDashboardMessages] = useState<
+    {
+      id: string;
+      content: string;
+      created_at: string;
+      sender_id: string;
+      sender: { full_name: string };
+    }[]
+  >([]);
   const [loadingMessages, setLoadingMessages] = useState(true);
   const [hasNewMessage, setHasNewMessage] = useState(false);
 
   useEffect(() => {
     const getUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      const email = data.user?.email || "";
-      const id = data.user?.id || null;
-      setUserEmail(email);
-      setUserId(id);
-      setUserName(email.split("@")[0] || "User");
-
-      if (id) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("full_name, title")
-          .eq("id", id)
-          .single();
-        if (profile) {
-          setUserProfile(profile);
-          if (profile.full_name)
-            setUserName(profile.full_name.split(" ").slice(-1)[0]);
+      try {
+        const { data, error: userError } = await supabase.auth.getUser();
+        if (userError) {
+          console.error("Error fetching user:", userError);
+          // Handle user fetch error, e.g., redirect to login
+          return;
         }
+
+        const email = data.user?.email || "";
+        const id = data.user?.id || null;
+        setUserEmail(email);
+        setUserId(id);
+        setUserName(email.split("@")[0] || "User");
+
+        if (id) {
+          const { data: profile, error: profileError } = await supabase
+            .from("profiles")
+            .select("full_name, title")
+            .eq("id", id)
+            .single();
+          if (profileError) {
+            console.error("Error fetching profile:", profileError);
+            // Handle profile fetch error
+          }
+          if (profile) {
+            setUserProfile(profile);
+            if (profile.full_name)
+              setUserName(profile.full_name.split(" ").slice(-1)[0]);
+          }
+        }
+      } catch (err) {
+        console.error("An unexpected error occurred in getUser:", err);
       }
     };
     getUser();
@@ -171,7 +198,7 @@ const Dashboard: React.FC = () => {
         },
       );
 
-      const enriched: ScheduleEntry[] = (entries || []).map((e: any) => ({
+      const enriched: ScheduleEntry[] = (entries || []).map((e) => ({
         ...e,
         stations:
           e.station_id && stationMap[e.station_id]
@@ -223,7 +250,18 @@ const Dashboard: React.FC = () => {
         .limit(4);
 
       if (!error && data) {
-        setDashboardMessages(data);
+        setDashboardMessages(
+          data.map((m) => ({
+            id: m.id,
+            content: m.content,
+            created_at: m.created_at,
+            sender_id: m.sender_id,
+            sender:
+              m.sender && !Array.isArray(m.sender)
+                ? { full_name: (m.sender as { full_name: string }).full_name }
+                : { full_name: "Unbekannt" },
+          })),
+        );
       } else {
         // Fallback: ohne JOIN, dann Namen separat laden
         console.error("Join-Fehler:", error);
@@ -270,7 +308,7 @@ const Dashboard: React.FC = () => {
           table: "messages",
           filter: `receiver_id=eq.${userId}`,
         },
-        (_payload) => {
+        () => {
           playNotificationSound();
           setHasNewMessage(true);
           fetchDashboardMessages();
@@ -414,11 +452,11 @@ const Dashboard: React.FC = () => {
               dashboardMessages.map((msg, i) => (
                 <div key={i} className="message-item">
                   <div className="msg-avatar">
-                    {(msg.sender as any)?.full_name?.[0]?.toUpperCase() || "?"}
+                    {msg.sender?.full_name?.[0]?.toUpperCase() || "?"}
                   </div>
                   <div className="msg-body">
                     <div className="msg-name">
-                      {(msg.sender as any)?.full_name || "Unbekannt"}
+                      {msg.sender?.full_name || "Unbekannt"}
                     </div>
                     <div className="msg-action">{msg.content}</div>
                   </div>

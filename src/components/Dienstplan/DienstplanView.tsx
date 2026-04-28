@@ -121,11 +121,12 @@ const DienstplanView: React.FC<DienstplanViewProps> = ({ userId }) => {
       const scrollTarget = Math.max(0, nowTopPx - 200);
       scrollAreaRef.current.scrollTop = scrollTarget;
     }
-  }, [loading]);
+  }, [loading, nowMinutes]);
 
   // Fetch
   const fetchWeek = useCallback(
     async (mon: Date) => {
+      if (!userId) return;
       setLoading(true);
       const weekDates = getWeekDates(mon);
 
@@ -155,7 +156,7 @@ const DienstplanView: React.FC<DienstplanViewProps> = ({ userId }) => {
         },
       );
 
-      const enriched: ScheduleEntry[] = (entries || []).map((e: any) => ({
+      const enriched: ScheduleEntry[] = (entries || []).map((e) => ({
         ...e,
         stations:
           e.station_id && stationMap[e.station_id]
@@ -184,7 +185,10 @@ const DienstplanView: React.FC<DienstplanViewProps> = ({ userId }) => {
   );
 
   useEffect(() => {
-    fetchWeek(monday);
+    const load = async () => {
+      await fetchWeek(monday);
+    };
+    load();
   }, [monday, fetchWeek]);
 
   // Navigation

@@ -26,11 +26,16 @@ interface Message {
   reactions?: Record<string, string[]>; // { emoji: [user_id1, user_id2] }
   file_url?: string;
   file_name?: string;
-  sender?: { full_name: string }; // Für Gruppenchats
+  sender?: { full_name: string } | null; // Für Gruppenchats
 }
 
 interface MitteilungenViewProps {
   userId: string;
+}
+
+interface SupabasePresencePayload {
+  user_id: string;
+  online_at: string;
 }
 
 const MitteilungenView: React.FC<MitteilungenViewProps> = ({ userId }) => {
@@ -61,6 +66,13 @@ const MitteilungenView: React.FC<MitteilungenViewProps> = ({ userId }) => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const markAsRead = async (messageId: string) => {
+    await supabase
+      .from("messages")
+      .update({ is_read: true })
+      .eq("id", messageId);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -114,10 +126,13 @@ const MitteilungenView: React.FC<MitteilungenViewProps> = ({ userId }) => {
 
     channel
       .on("presence", { event: "sync" }, () => {
-        const state = channel.presenceState();
+        const state: Record<
+          string,
+          Array<SupabasePresencePayload>
+        > = channel.presenceState();
         const ids = Object.values(state)
           .flat()
-          .map((p: any) => p.user_id);
+          .map((p) => p.user_id);
         setOnlineUsers(ids);
       })
       .subscribe(async (status) => {
@@ -139,7 +154,22 @@ const MitteilungenView: React.FC<MitteilungenViewProps> = ({ userId }) => {
 
     const fetchMessages = async () => {
       // Wir holen die Sender-Daten separat, falls die Beziehung im Cache fehlt
-      let query = supabase.from("messages").select("*");
+      let query = supabase.from("messages").select(
+        `
+      id,
+      content,
+      created_at,
+      sender_id,
+      receiver_id,
+      station_id,
+      is_read,
+      is_edited,
+      reactions,
+      file_url,
+      file_name,
+      sender:profiles!sender_id(full_name)
+    `,
+      );
 
       if (selectedUser) {
         query = query.or(
@@ -154,17 +184,10 @@ const MitteilungenView: React.FC<MitteilungenViewProps> = ({ userId }) => {
       });
 
       if (!error && data) {
-        // Namen manuell nachladen für alle Nachrichten
-        const enrichedMessages = await Promise.all(
-          data.map(async (msg) => {
-            const { data: profile } = await supabase
-              .from("profiles")
-              .select("full_name")
-              .eq("id", msg.sender_id)
-              .single();
-            return { ...msg, sender: profile };
-          }),
-        );
+        const enrichedMessages = data.map((msg) => ({
+          ...msg,
+          sender: msg.sender && !Array.isArray(msg.sender) ? msg.sender : null,
+        }));
         setMessages(enrichedMessages);
       }
     };
@@ -200,15 +223,10 @@ const MitteilungenView: React.FC<MitteilungenViewProps> = ({ userId }) => {
             }
 
             if (isRelevant) {
-              const { data: profile } = await supabase
-                .from("profiles")
-                .select("full_name")
-                .eq("id", msg.sender_id)
-                .single();
-
               const enrichedMsg: Message = {
                 ...msg,
-                sender: profile ? { full_name: profile.full_name } : undefined,
+                sender:
+                  msg.sender && !Array.isArray(msg.sender) ? msg.sender : null,
               };
 
               setMessages((prev) => {
@@ -253,13 +271,6 @@ const MitteilungenView: React.FC<MitteilungenViewProps> = ({ userId }) => {
       supabase.removeChannel(channel);
     };
   }, [selectedUser, selectedStation, userId]);
-
-  const markAsRead = async (messageId: string) => {
-    await supabase
-      .from("messages")
-      .update({ is_read: true })
-      .eq("id", messageId);
-  };
 
   const toggleReaction = async (messageId: string, emoji: string) => {
     const msg = messages.find((m) => m.id === messageId);
@@ -368,7 +379,7 @@ const MitteilungenView: React.FC<MitteilungenViewProps> = ({ userId }) => {
     if ((!newMessage.trim() && !fileUrl) || (!selectedUser && !selectedStation))
       return;
 
-    const msgData: any = {
+    const msgData: Partial<Message> = {
       sender_id: userId,
       content: newMessage.trim(),
     };

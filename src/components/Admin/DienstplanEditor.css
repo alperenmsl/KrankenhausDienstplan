@@ -1,0 +1,285 @@
+.dienstplan-editor {
+  margin-top: 20px;
+}
+
+.editor-grid {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr; /* Formular etwas schmaler, Liste breiter */
+  gap: 30px;
+}
+
+@media (max-width: 900px) {
+  .editor-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.editor-card {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Leichter Schatten für Tiefe */
+}
+
+.editor-card h4 {
+  margin: 0 0 15px 0; /* Etwas weniger Abstand */
+  color: #1e293b;
+  font-size: 1.1rem;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 10px;
+}
+
+.month-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.month-navigation h4 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #1e293b;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.btn-month-nav {
+  background: none;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 1rem;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-month-nav:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.add-shift-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px; /* Etwas weniger Abstand zwischen Formularfeldern */
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px; /* Etwas weniger Abstand */
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 0.9rem;
+  color: #475569;
+  font-weight: 500;
+}
+
+.form-group input[type="date"],
+.form-group input[type="time"],
+.form-group select,
+.add-shift-form textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  box-sizing: border-box; /* Padding und Border in die Breite einbeziehen */
+}
+
+.form-group input[type="date"]:focus,
+.form-group input[type="time"]:focus,
+.form-group select:focus,
+.add-shift-form textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 5px;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+  transform: scale(1.2); /* Checkbox etwas größer */
+}
+
+.checkbox-group label {
+  margin-bottom: 0;
+  font-size: 0.9rem;
+  color: #334155;
+}
+
+.add-shift-form textarea {
+  min-height: 70px; /* Etwas kleiner */
+}
+
+.btn-primary {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 12px 15px; /* Etwas mehr horizontaler Padding */
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  font-size: 1rem;
+}
+
+.btn-primary:hover {
+  background: #2563eb;
+  transform: translateY(-1px); /* Leichter Hover-Effekt */
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.btn-secondary {
+  background: #e2e8f0;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  padding: 12px 15px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1rem;
+}
+
+.btn-secondary:hover {
+  background: #cbd5e1;
+  color: #1e293b;
+  transform: translateY(-1px);
+}
+
+.btn-secondary:active {
+  transform: translateY(0);
+}
+
+.shifts-table-container {
+  max-height: 450px; /* Feste Höhe für Scrollbarkeit */
+  overflow-y: auto;
+  border: 1px solid #e2e8f0; /* Border für den Container */
+  border-radius: 8px;
+}
+
+.shifts-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.shifts-table th {
+  position: sticky; /* Header bleibt beim Scrollen sichtbar */
+  top: 0;
+  background: #f1f5f9; /* Hintergrund für sticky header */
+  text-align: left;
+  font-size: 0.75rem; /* Etwas kleiner */
+  text-transform: uppercase;
+  color: #64748b;
+  padding: 10px 12px; /* Angepasster Padding */
+  border-bottom: 1px solid #e2e8f0;
+  z-index: 1; /* Sicherstellen, dass der Header über dem Inhalt liegt */
+}
+
+.shifts-table td {
+  padding: 10px 12px; /* Angepasster Padding */
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.85rem; /* Etwas kleiner */
+  color: #334155;
+  vertical-align: middle; /* Vertikale Ausrichtung */
+}
+
+.shifts-table tbody tr:last-child td {
+  border-bottom: none; /* Keine Border am letzten Element */
+}
+
+.shifts-table tbody tr:hover {
+  background-color: #f8fafc; /* Leichter Hover-Effekt */
+}
+
+.station-tag {
+  padding: 3px 7px; /* Angepasster Padding */
+  border-radius: 5px;
+  font-size: 0.7rem; /* Etwas kleiner */
+  font-weight: 600;
+  white-space: nowrap;
+  display: inline-block; /* Für korrekten Padding */
+}
+
+.actions-cell {
+  display: flex;
+  gap: 6px; /* Etwas weniger Abstand */
+  align-items: center;
+  justify-content: flex-end; /* Buttons rechtsbündig */
+}
+
+.btn-edit,
+.btn-delete {
+  padding: 6px 10px; /* Angepasster Padding */
+  border-radius: 6px;
+  font-size: 0.75rem; /* Etwas kleiner */
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-edit {
+  background: #e0f2fe;
+  color: #075985;
+  border: 1px solid #bae6fd;
+}
+
+.btn-edit:hover {
+  background: #bae6fd;
+  color: #0369a1;
+  transform: translateY(-1px);
+}
+
+.btn-delete {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.btn-delete:hover {
+  background: #fecaca;
+  color: #7f1d1d;
+  transform: translateY(-1px);
+}
+
+.no-shifts {
+  text-align: center;
+  color: #94a3b8;
+  padding: 30px 0; /* Etwas weniger Padding */
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+.editor-loading {
+  padding: 30px;
+  text-align: center;
+  color: #64748b;
+  font-size: 1rem;
+}

@@ -1,6 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
+import DienstplanEditor from "./DienstplanEditor";
 import "./AdminPanel.css";
+
+interface Profile {
+  id: string;
+  full_name: string;
+  title: string;
+}
 
 const AdminPanel: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -8,10 +15,25 @@ const AdminPanel: React.FC = () => {
   const [fullName, setFullName] = useState("");
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(false);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;
   } | null>(null);
+
+  useEffect(() => {
+    fetchProfiles();
+  }, []);
+
+  const fetchProfiles = async () => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, full_name, title")
+      .order("full_name");
+    if (data) setProfiles(data);
+    if (error) console.error("Error fetching profiles:", error);
+  };
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,11 +71,12 @@ const AdminPanel: React.FC = () => {
         setFullName("");
         setTitle("");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Fehler beim Erstellen des Benutzers:", err);
       setMessage({
         type: "error",
-        text: err.message || "Ein Fehler ist aufgetreten.",
+        text:
+          err instanceof Error ? err.message : "Ein Fehler ist aufgetreten.",
       });
     } finally {
       setLoading(false);
@@ -143,11 +166,60 @@ const AdminPanel: React.FC = () => {
           <p>Demnächst: Stationen hinzufügen oder bearbeiten.</p>
         </div>
 
-        <div className="admin-card disabled">
+        {/* Dienstplan Editor Sektion */}
+        <div className="admin-card">
           <h3>Dienstplan-Editor</h3>
-          <p>Demnächst: Schichten für alle Mitarbeiter festlegen.</p>
+          <p className="card-desc">
+            Wähle einen Mitarbeiter aus, um seinen Dienstplan zu verwalten.
+          </p>
+
+          <div className="user-selector">
+            <select
+              value={selectedUserId || ""}
+              onChange={(e) => setSelectedUserId(e.target.value || null)}
+              className="admin-select"
+            >
+              <option value="">-- Mitarbeiter auswählen --</option>
+              {profiles.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.full_name} ({p.title})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {selectedUserId && (
+            <div className="editor-hint fade-in">
+              <p>
+                Dienstplan für{" "}
+                <strong>
+                  {profiles.find((p) => p.id === selectedUserId)?.full_name}
+                </strong>{" "}
+                wird geladen...
+              </p>
+            </div>
+          )}
         </div>
       </div>
+
+      {selectedUserId && (
+        <div className="admin-editor-section fade-in">
+          <div className="editor-header">
+            <h3>
+              Dienstplan bearbeiten:{" "}
+              {profiles.find((p) => p.id === selectedUserId)?.full_name}
+            </h3>
+            <button
+              className="close-editor"
+              onClick={() => setSelectedUserId(null)}
+            >
+              Schließen
+            </button>
+          </div>
+          {/* Editor Komponente */}
+          <DienstplanEditor userId={selectedUserId} />
+        </div>
+      )}
     </div>
   );
 };
